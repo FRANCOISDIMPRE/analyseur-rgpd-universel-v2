@@ -1,109 +1,86 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Analyseur RGPD Universel v2</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Analyseur RGPD Universel v2</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      text-align: center;
+      padding: 40px;
+    }
 
-<style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
-    text-align:center;
-    padding:40px;
-}
+    input {
+      width: 400px;
+      padding: 10px;
+    }
 
-h1{
-    font-size:32px;
-}
+    button {
+      padding: 10px 20px;
+      background: #0066ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
 
-input{
-    width:420px;
-    padding:12px;
-    font-size:16px;
-}
+    .result {
+      margin-top: 30px;
+      background: white;
+      padding: 20px;
+      display: inline-block;
+      text-align: left;
+      min-width: 400px;
+    }
 
-button{
-    padding:12px 22px;
-    background:#0066ff;
-    color:white;
-    border:none;
-    cursor:pointer;
-    font-size:16px;
-}
-
-button:hover{
-    background:#004ecc;
-}
-
-.result{
-    margin-top:40px;
-    background:white;
-    padding:25px;
-    display:inline-block;
-    text-align:left;
-    border-radius:8px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
-}
-
-.ok{color:green;}
-.nok{color:red;}
-.score{
-    font-size:24px;
-    font-weight:bold;
-    margin-bottom:20px;
-}
-.footer{
-    margin-top:50px;
-    font-size:12px;
-    color:#777;
-}
-</style>
+    .ok { color: green; }
+    .nok { color: red; }
+  </style>
 </head>
-
 <body>
 
 <h1>Analyseur RGPD Universel v2</h1>
 
-<input type="text" id="url" placeholder="https://www.exemple.com">
+<input type="text" id="urlInput" placeholder="https://www.exemple.com">
 <button onclick="analyser()">Analyser</button>
 
 <div id="resultat"></div>
 
 <script>
-async function analyser(){
+async function analyser() {
+  const url = document.getElementById("urlInput").value;
 
-    const url = document.getElementById("url").value;
+  if (!url) {
+    alert("Veuillez entrer une URL");
+    return;
+  }
 
-    if(!url){
-        alert("Veuillez entrer une URL");
-        return;
-    }
-
-    let score = 0;
-
-    // Simulation intelligente (version universelle déployable)
-    const checks = [
-        {label:"HTTPS", ok:url.startsWith("https")},
-        {label:"Mentions légales", ok:true},
-        {label:"Politique de confidentialité", ok:true},
-        {label:"CGV", ok:Math.random()>0.4},
-        {label:"Bannière cookies", ok:true},
-        {label:"Formulaire avec consentement", ok:Math.random()>0.5},
-        {label:"DPO mentionné", ok:Math.random()>0.6},
-        {label:"Durée de conservation indiquée", ok:Math.random()>0.5},
-        {label:"Transfert hors UE précisé", ok:Math.random()>0.5},
-        {label:"Politique cookies détaillée", ok:Math.random()>0.5}
-    ];
-
-    let html = "<div class='result'>";
-    html += "<div class='score'>Analyse de : "+url+"</div>";
-
-    checks.forEach(c=>{
-        if(c.ok){ score++; }
-        html += c.label + " : " + (c.ok ? "<span class='ok'>OK</span>" : "<span class='nok'>NOK</span>") + "<br>";
+  try {
+    const response = await fetch("/analyser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
     });
 
-    let finalScore = Math.round((score/checks.length)*100);
+    const data = await response.json();
 
-    html = "<div class='result'><div class='score'>Score
+    document.getElementById("resultat").innerHTML = `
+      <div class="result">
+        <h2>Score RGPD : ${data.score}%</h2>
+        <p>HTTPS : <span class="${data.https ? 'ok' : 'nok'}">${data.https ? 'OK' : 'NOK'}</span></p>
+        <p>Mentions légales : <span class="${data.mentions ? 'ok' : 'nok'}">${data.mentions ? 'OK' : 'NOK'}</span></p>
+        <p>Politique confidentialité : <span class="${data.confidentialite ? 'ok' : 'nok'}">${data.confidentialite ? 'OK' : 'NOK'}</span></p>
+        <p>CGV : <span class="${data.cgv ? 'ok' : 'nok'}">${data.cgv ? 'OK' : 'NOK'}</span></p>
+        <p>Bannière cookies : <span class="${data.cookies ? 'ok' : 'nok'}">${data.cookies ? 'OK' : 'NOK'}</span></p>
+        <p>Formulaire présent : <span class="${data.formulaire ? 'ok' : 'nok'}">${data.formulaire ? 'OK' : 'NOK'}</span></p>
+      </div>
+    `;
+  } catch (error) {
+    console.error(error);
+    alert("Erreur lors de l'analyse");
+  }
+}
+</script>
+
+</body>
+</html>
