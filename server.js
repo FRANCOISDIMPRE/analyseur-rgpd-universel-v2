@@ -23,24 +23,25 @@ app.post("/audit", async (req, res) => {
     });
 
     const $ = cheerio.load(response.data);
-    const texte = $("body").text().toLowerCase();
+    const text = $("body").text();
 
-    const controles = {
+    const checks = {
       https: url.startsWith("https"),
-      mentions: /mentions légales/i.test(texte),
-      politique: /politique de confidentialité/i.test(texte),
-      cgv: /conditions générales/i.test(texte),
-      cookies: /cookies/i.test(texte),
+      mentions: /mentions légales/i.test(text),
+      politique: /politique de confidentialité/i.test(text),
+      cgv: /conditions générales/i.test(text),
+      cookies: /cookie/i.test(text),
       formulaire: $("form").length > 0
     };
 
-    const total = Object.keys(controles).length;
-    const ok = Object.values(controles).filter(v => v).length;
-    const score = Math.round((ok / total) * 100);
+    const score =
+      Object.values(checks).filter(Boolean).length /
+      Object.keys(checks).length *
+      100;
 
     res.json({
-      score,
-      details: controles
+      score: Math.round(score),
+      checks
     });
 
   } catch (error) {
@@ -51,5 +52,5 @@ app.post("/audit", async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log("Serveur lancé sur le port", PORT);
+  console.log("Serveur lancé sur le port " + PORT);
 });
