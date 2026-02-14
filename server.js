@@ -1,7 +1,7 @@
 const express = require("express");
 const axios = require("axios");
-const cors = require("cors");
 const cheerio = require("cheerio");
+const cors = require("cors");
 
 const app = express();
 
@@ -25,25 +25,28 @@ app.post("/audit", async (req, res) => {
     const $ = cheerio.load(response.data);
     const text = $("body").text();
 
-    const points = {
-      https: url.startsWith("https") ? "OK" : "NOK",
-      mentions_legales: /mentions légales/i.test(text) ? "OK" : "NOK",
-      politique_confidentialite: /politique.*confidentialité/i.test(text) ? "OK" : "NOK",
-      cookies: /cookie/i.test(text) ? "OK" : "NOK",
-      cgv: /conditions générales/i.test(text) ? "OK" : "NOK"
+    const checks = {
+      https: url.startsWith("https"),
+      mentions: /mentions légales/i.test(text),
+      politique: /politique de confidentialité/i.test(text),
+      cgv: /cgv|conditions générales/i.test(text),
+      cookies: /cookies/i.test(text),
+      formulaire: $("form").length > 0
     };
 
-    const score =
-      Object.values(points).filter(v => v === "OK").length * 20;
+    const total = Object.keys(checks).length;
+    const ok = Object.values(checks).filter(v => v).length;
+    const score = Math.round((ok / total) * 100);
 
-    res.json({ score, points });
+    res.json({ score, checks });
 
   } catch (error) {
-    res.status(500).json({ error: "Impossible d'analyser le site." });
+    console.error("Erreur audit:", error.message);
+    res.status(500).json({ error: "Erreur analyse" });
   }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () =>
-  console.log("Serveur lancé sur le port " + PORT)
-);
+app.listen(PORT, () => {
+  console.log("Serveur lancé sur le port " + PORT);
+});
